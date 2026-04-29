@@ -1,0 +1,57 @@
+//Receive a "F:___\n" serial angle command and turn on the LEDS to signal received
+//test sender on python side is filename "sftest.py"
+
+
+String input = "";
+//from Qs schematic the LEDS are connected to 14 15 16
+const int LED_MOSI = 14;
+const int LED_MISO = 15;
+const int LED_SCLK = 16;
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  pinMode(LED_MOSI, OUTPUT);
+  pinMode(LED_MISO, OUTPUT);
+  pinMode(LED_SCLK, OUTPUT);
+
+  //turn off initially
+  digitalWrite(LED_MOSI, LOW);
+  digitalWrite(LED_MISO, LOW);
+  digitalWrite(LED_SCLK, LOW);
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  while(Serial.available()){
+    char c = Serial.read();
+    if(c == '\n'){
+      //process command and clear input
+      processCommand(input);
+      input = "";
+
+    }else{
+      //add char to input string
+      input += c;
+    }
+  }
+
+}
+
+void processCommand(String cmd){
+  if(cmd.startsWith("F:")){
+    //from index 3->end is angle
+    float angle = cmd.substring(2).toFloat();
+    Serial.print("Received fire command at angle: ");
+    Serial.println(angle);
+
+
+    digitalWrite(LED_MOSI, HIGH);
+    digitalWrite(LED_SCLK, HIGH);
+
+    delay(500);
+
+    digitalWrite(LED_MOSI, LOW);
+    digitalWrite(LED_SCLK, LOW);
+  }
+}
