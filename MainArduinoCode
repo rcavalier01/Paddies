@@ -1,0 +1,115 @@
+//Receive a "F:___\n" serial angle command and turn on the LEDS to signal received
+//test sender on python side is filename "sftest.py"
+
+
+String input = "";
+//from Qs schematic the LEDS are connected to 14 15 16
+const int LED_MOSI = 14;
+const int LED_MISO = 15;
+const int LED_SCLK = 16;
+const int DIR = 10;
+const int STEP = 9;
+const int trig = 2;
+int target = 0;
+int currentAngle = 0;
+bool firing = false;
+float start = 0;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  pinMode(LED_MOSI, OUTPUT);
+  pinMode(LED_MISO, OUTPUT);
+  pinMode(LED_SCLK, OUTPUT);
+  pinMode(STEP, OUTPUT);
+  pinMode(DIR, OUTPUT);
+  pinMode(trig, OUTPUT);
+
+
+  //turn off initially
+  digitalWrite(LED_MOSI, LOW);
+  digitalWrite(LED_MISO, LOW);
+  digitalWrite(LED_SCLK, LOW);
+  digitalWrite(trig, LOW);
+
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  while(Serial.available()){
+    char c = Serial.read();
+    if(c == '\n'){
+      //process command and clear input
+      processCommand(input);
+      input = "";
+
+    }else{
+      //add char to input string
+      input += c;
+    }
+  }
+  if (target != currentAngle) {
+    andRotate(target);
+    
+  }
+  fire();
+
+}
+
+void processCommand(String cmd){
+  if(cmd.startsWith("F:")){
+    //from index 3->end is angle
+    float angle = cmd.substring(2).toFloat();
+    Serial.print("Received fire command at angle: ");
+    Serial.println(angle);
+    target = angle;
+
+
+    digitalWrite(LED_MOSI, HIGH);
+    digitalWrite(LED_SCLK, HIGH);
+
+    delay(500);
+
+    digitalWrite(LED_MOSI, LOW);
+    digitalWrite(LED_SCLK, LOW);
+  }
+}
+
+void andRotate(float tar) {
+  float delta = tar - currentAngle;
+
+  // Set direction based on which way we're actually moving
+  if (delta < 0) {
+    digitalWrite(DIR, HIGH);  // reverse
+  } else {
+    digitalWrite(DIR, LOW);   // forward
+  }
+
+  // Step count is always positive — direction pin handles sign
+  long steps = abs((long)(delta * 26.66));
+
+  for (long x = 0; x < steps; x++) {
+    digitalWrite(STEP, HIGH);
+    delayMicroseconds(500);
+    digitalWrite(STEP, LOW);
+    delayMicroseconds(500);
+  }
+
+  currentAngle = tar;
+  firing = true;
+  start = millis();
+}
+void fire() {
+  if (firing == true) {
+    digitalWrite(trig, HIGH);
+    if (millis() - start > 1000) {
+      firing = false;
+      digitalWrite(trig, LOW);
+    }
+  } else {
+    digitalWrite(trig, LOW);
+  }
+}
+
+ 
