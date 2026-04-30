@@ -69,7 +69,7 @@ void processCommand(String cmd){
     digitalWrite(LED_MOSI, HIGH);
     digitalWrite(LED_SCLK, HIGH);
 
-    delay(500);
+    delay(100);
 
     digitalWrite(LED_MOSI, LOW);
     digitalWrite(LED_SCLK, LOW);
